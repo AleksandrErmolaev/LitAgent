@@ -15,7 +15,7 @@ class CharacterAnalyzerAgent:
     def __init__(
         self,
         llm_model=None,
-        spacy_model: str = "ru_core_news_lg",
+        spacy_model: str = "en_core_web_lg",
         min_mentions: int = 5,
         context_window: int = 2,
         max_context_chars: int = 2000,
@@ -45,15 +45,14 @@ class CharacterAnalyzerAgent:
             self.context_window, self.max_context_chars
         )
         if not context:
-            logger.warning(f"Пустой контекст для {name}")
+            logger.warning(f"Empty context for {name}")
             return None
 
         if self.llm is None:
-            # Заглушка для тестирования
             return Character(
                 name=name,
-                role="неизвестно",
-                archetype="обычный человек",
+                role="unknown",
+                archetype="everyman",
                 traits=[],
                 description="",
                 mentions_count=len(mentions),
@@ -65,11 +64,10 @@ class CharacterAnalyzerAgent:
         parsed = self.llm.parse_character_response(response, name)
 
         if parsed is None:
-            # fallback
             return Character(
                 name=name,
-                role="неизвестно",
-                archetype="обычный человек",
+                role="unknown",
+                archetype="everyman",
                 traits=[],
                 description="",
                 mentions_count=len(mentions),
@@ -79,7 +77,7 @@ class CharacterAnalyzerAgent:
         return Character(
             name=name,
             role=parsed.get("role", ""),
-            archetype=parsed.get("archetype", "обычный человек"),
+            archetype=parsed.get("archetype", "everyman"),
             traits=parsed.get("traits", []),
             description=parsed.get("description", ""),
             mentions_count=len(mentions),
@@ -89,31 +87,29 @@ class CharacterAnalyzerAgent:
     def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         full_text = input_data["full_text"]
         if not full_text:
-            raise ValueError("Отсутствует поле 'full_text'")
+            raise ValueError("Missing 'full_text' field")
 
-        logger.info("Запуск NER...")
+        logger.info("Running NER...")
         mentions, sentences = self.ner_extractor.extract_person_mentions(full_text)
-        logger.info(f"Найдено уникальных PERSON: {len(mentions)}")
+        logger.info(f"Unique PERSON entities found: {len(mentions)}")
 
         filtered = self._filter_characters(mentions)
         if not filtered:
             return {"characters": [], "relationships": []}
 
         characters = []
-        for name, count in tqdm(filtered, desc="Анализ персонажей"):
+        for name, count in tqdm(filtered, desc="Analyzing characters"):
             char = self._analyze_character(name, mentions[name], sentences)
             if char:
                 characters.append(char)
             else:
-                # Добавляем минимальную запись
                 characters.append(Character(
                     name=name, role="", archetype="", traits=[],
                     description="", mentions_count=count, quote=""
                 ))
 
-        logger.info(f"Обработано персонажей: {len(characters)}")
+        logger.info(f"Characters processed: {len(characters)}")
 
-        # Преобразуем в словари для передачи в relationships
         char_dicts = [c.to_dict() for c in characters]
         relationships = build_relationships(
             full_text, char_dicts, mentions, self.cooccurrence_threshold

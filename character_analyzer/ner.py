@@ -1,56 +1,42 @@
 import spacy
-import pymorphy3
 from typing import Dict, List, Tuple
-from collections import defaultdict, Counter
+from collections import defaultdict
 from tqdm import tqdm
 from .utils import split_text_into_chunks
 
 class NERExtractor:
-    def __init__(self, model_name: str = "ru_core_news_lg"):
+    def __init__(self, model_name: str = "en_core_web_lg"):
         try:
             self.nlp = spacy.load(model_name)
         except OSError:
             raise RuntimeError(
-                f"Модель spaCy '{model_name}' не найдена. Установите: "
-                "python -m spacy download ru_core_news_lg"
+                f"spaCy model '{model_name}' not found. Install: "
+                "python -m spacy download en_core_web_lg"
             )
-        # Инициализируем морфологический анализатор
-        self.morph = pymorphy3.MorphAnalyzer()
 
     def _normalize_name(self, name: str) -> str:
-        """
-        Приводит имя к нормальной форме (именительный падеж, единственное число).
-        Если слово не найдено в словаре, возвращает исходное.
-        """
-        # Очищаем от лишних символов, оставляем буквы и дефис
-        clean_name = ''.join(c for c in name if c.isalpha() or c == '-')
-        if not clean_name:
+        """Clean and capitalize the name (English only)."""
+        # Remove any non-alphabetic characters except hyphen
+        clean = ''.join(c for c in name if c.isalpha() or c == '-')
+        if not clean:
             return name
-        try:
-            parsed = self.morph.parse(clean_name)[0]
-            # Приводим к именительному падежу (nomn)
-            normal = parsed.inflect({'nomn'})
-            if normal:
-                return normal.word.capitalize()
-            else:
-                return clean_name.capitalize()
-        except Exception:
-            return name
+        # Capitalize first letter, keep the rest as is (e.g., "McDonald")
+        return clean[0].upper() + clean[1:] if len(clean) > 1 else clean.upper()
 
     def _merge_mentions(
-    self,
-    raw_mentions: Dict[str, List[Tuple[int, int, str]]]
-) -> Dict[str, List[Tuple[int, int, str]]]:
+        self,
+        raw_mentions: Dict[str, List[Tuple[int, int, str]]]
+    ) -> Dict[str, List[Tuple[int, int, str]]]:
         """
-        Группирует упоминания по нормализованному имени.
-        Каноническое имя — нормализованная форма с заглавной буквы.
+        Group mentions by normalized name.
+        Canonical name is the normalized form.
         """
         merged = defaultdict(list)
         for original_name, occs in raw_mentions.items():
             norm_name = self._normalize_name(original_name)
             merged[norm_name].extend(occs)
 
-        # Сортируем вхождения для каждого нормализованного имени
+        # Sort occurrences by position
         for norm_name in merged:
             merged[norm_name].sort(key=lambda x: x[0])
 
@@ -60,9 +46,9 @@ class NERExtractor:
         self, text: str
     ) -> Tuple[Dict[str, List[Tuple[int, int, str]]], List[Tuple[int, int, str]]]:
         """
-        Возвращает:
-          - mentions: словарь каноническое_имя -> список (start, end, текст_упоминания)
-          - sentences: список предложений с глобальными позициями
+        Returns:
+          - mentions: dict canonical_name -> list of (start, end, mention_text)
+          - sentences: list of sentences with global positions
         """
         chunks = split_text_into_chunks(text)
         raw_mentions: Dict[str, List[Tuple[int, int, str]]] = defaultdict(list)
@@ -71,22 +57,21 @@ class NERExtractor:
 
         for chunk in tqdm(chunks, desc="NER (spaCy)", unit="chunk"):
             doc = self.nlp(chunk)
-            # Сохраняем предложения
+            # Save sentences
             for sent in doc.sents:
                 start = offset + sent.start_char
                 end = offset + sent.end_char
                 all_sentences.append((start, end, sent.text))
 
-            # Извлекаем PERSON
+            # Extract PERSON entities
             for ent in doc.ents:
-                if ent.label_ == "PER":  # в русской модели PER
+                if ent.label_ == "PERSON":
                     name = ent.text.strip()
                     if name:
                         start = offset + ent.start_char
                         end = offset + ent.end_char
                         raw_mentions[name].append((start, end, name))
-            offset += len(chunk) + 1  # приблизительно длина пробела между чанками
+            offset += len(chunk) + 1  # approx space between chunks
 
-        # Нормализация и объединение вариантов
         merged_mentions = self._merge_mentions(raw_mentions)
         return merged_mentions, all_sentences

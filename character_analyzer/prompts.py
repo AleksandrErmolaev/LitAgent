@@ -1,22 +1,22 @@
 ARCHETYPES = [
-    "герой", "антигерой", "наставник", "трикстер", "любовник",
-    "невинный", "правитель", "творец", "опекун", "обычный человек"
+    "hero", "anti-hero", "mentor", "trickster", "lover",
+    "innocent", "ruler", "creator", "caregiver", "everyman"
 ]
 
 def build_character_prompt(name: str, context: str) -> str:
     archetypes_str = ", ".join(ARCHETYPES)
-    return f"""Ты — литературный аналитик. На основе приведённого контекста из произведения опиши персонажа «{name}».
+    return f"""You are a literary analyst. Based on the provided context from a novel, describe the character "{name}".
 
-Контекст (фрагменты с упоминаниями персонажа):
+Context (excerpts mentioning the character):
 ---
 {context}
 ---
 
-Верни ответ строго в формате JSON без дополнительных комментариев. Поля:
-- "role": роль персонажа в сюжете (например, "главный герой", "антагонист", "второстепенный", "эпизодический").
-- "archetype": один из архетипов: {archetypes_str}. Если не подходит, выбери наиболее близкий.
-- "traits": список из 3-5 ключевых черт характера (прилагательные или короткие фразы).
-- "description": краткое описание персонажа (2-3 предложения), основанное только на контексте.
-- "quote": одна наиболее характерная цитата персонажа из контекста (прямая речь или выразительная фраза). Если прямой речи нет, выбери фразу, хорошо его характеризующую.
+Respond strictly in JSON format with no extra commentary. Fields:
+- "role": character's role in the story (e.g., "protagonist", "antagonist", "secondary", "minor").
+- "archetype": one of the archetypes: {archetypes_str}. Choose the closest fit.
+- "traits": list of 3-5 key personality traits (adjectives or short phrases).
+- "description": a brief description of the character (2-3 sentences) based solely on the context.
+- "quote": one most representative quote from the character in the context (direct speech or expressive phrase). If no direct speech, choose a phrase that best characterizes them.
 
 JSON:"""
