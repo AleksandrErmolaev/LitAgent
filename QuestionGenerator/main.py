@@ -1,6 +1,9 @@
 from typing import List, Dict, Any
 from dataclasses import dataclass
 import random
+from fastapi import FastAPI
+
+app = FastAPI()
 
 def call_llm(prompt: str, max_tokens: int = 512) -> str:
     return f"[LLM OUTPUT]: {prompt[:200]}..."
@@ -124,3 +127,19 @@ D)
             quote_evidence=quote,
             chapter=chapter_idx + 1
         )
+
+
+@app.post("/generate")
+def generate(data: dict):
+    return {
+        "questions": [
+            {
+                "text": "Пример вопроса?",
+                "difficulty": "easy",
+                "options": ["A", "B", "C", "D"],
+                "correct_answer": "A",
+                "quote_evidence": "",
+                "chapter": 1
+            }
+        ]
+    }

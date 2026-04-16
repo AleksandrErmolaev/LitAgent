@@ -1,7 +1,9 @@
 from typing import List, Dict, Any
 import re
 from dataclasses import dataclass
+from fastapi import FastAPI
 
+app = FastAPI()
 def call_llm(prompt: str, max_tokens: int = 512) -> str:
     # TODO: подключить реальную модель (Llama-3-8B-Instruct)
     return f"[LLM OUTPUT]: {prompt[:200]}..."
@@ -92,3 +94,16 @@ class SummarizerAgent:
         quotes = [q.strip() for q in quotes if len(q.split()) > 5]
 
         return quotes[:max_quotes]
+
+@app.post("/summarize")
+def summarize(data: dict):
+    text = data.get("text", "")
+    chapters = data.get("chapters", [])
+
+    return {
+        "super_short": "Короткое содержание",
+        "short": "Среднее содержание",
+        "detailed": "Подробное содержание",
+        "key_quotes": [],
+        "chapter_summaries": []
+    }
