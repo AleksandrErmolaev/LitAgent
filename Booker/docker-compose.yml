@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - litagent_network
+
+  booker:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LITRES_API_KEY=${LITRES_API_KEY:-}
+    depends_on:
+      - redis
+    restart: unless-stopped
+    # Ограничения безопасности (временно отключаем для Windows)
+    # read_only: true  # Закомментировано для Windows
+    # tmpfs:           # Закомментировано для Windows
+    #   - /tmp:size=64M
+    # security_opt:    # Закомментировано для Windows
+    #   - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - litagent_network
+
+  # Prometheus временно отключаем, если нет файла конфигурации
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #   restart: unless-stopped
+  #   networks:
+  #     - litagent_network
+
+  # Grafana временно отключаем
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   restart: unless-stopped
+  #   networks:
+  #     - litagent_network
+
+volumes:
+  redis_data:
+
+networks:
+  litagent_network:
+    driver: bridge
