@@ -42,17 +42,22 @@ class SummarizerAgent:
             chapter_summaries=chapter_summaries
         ).__dict__
 
-
-    def _summarize_chapter(self, chapter: str, idx: int) -> str:
+    def _summarize_chapter(self, chapter: str, idx: int, lang: str) -> str:
         prompt = f"""
-Ты — литературный аналитик.
+    Ты — профессиональный литературный аналитик.
 
-Сделай краткое содержание главы (5-7 предложений).
+    Тебе дан текст (возможно на английском).
+    Сделай краткое содержание главы НА РУССКОМ ЯЗЫКЕ.
 
-Глава {idx+1}:
-{chapter}
-"""
-        return call_llm(prompt, max_tokens=300)
+    Требования:
+    - 5–7 предложений
+    - сохранить смысл
+    - не добавлять ничего от себя
+
+    Глава {idx + 1}:
+    {chapter}
+    """
+        return call_llm(prompt)
 
     def _aggregate_summaries(self, summaries: List[str], level: str) -> str:
         if level == "detailed":
