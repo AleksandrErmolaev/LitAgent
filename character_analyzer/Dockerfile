@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Установка системных зависимостей, необходимых для spaCy
+# Установка системных зависимостей для spaCy и сборщиков
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -11,14 +11,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код агента и api
-COPY . /app/agents/character_analyzer/
+# Копируем ВСЁ содержимое проекта в /app/character_analyzer
+COPY . /app/character_analyzer/
 
-# Устанавливаем переменную окружения, чтобы Python видел пакеты в /app
+# Убеждаемся, что папка является Python-пакетом
+RUN touch /app/character_analyzer/__init__.py
+
+# Добавляем /app в PYTHONPATH, чтобы Python нашёл пакет character_analyzer
 ENV PYTHONPATH=/app
 
-# Порт, на котором будет работать FastAPI
+# Открываем порт FastAPI
 EXPOSE 8000
 
-# Команда запуска
-CMD ["uvicorn", "agents.character_analyzer.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Запускаем Uvicorn, указывая на модуль character_analyzer.api:app
+# (предполагается, что в api.py есть объект app = FastAPI())
+CMD ["uvicorn", "character_analyzer.api:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -12,7 +12,7 @@ services:
       - litagent_network
 
   booker:
-    build: .
+    build: Booker
     ports:
       - "8000:8000"
     environment:
@@ -21,12 +21,6 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
-    # Ограничения безопасности (временно отключаем для Windows)
-    # read_only: true  # Закомментировано для Windows
-    # tmpfs:           # Закомментировано для Windows
-    #   - /tmp:size=64M
-    # security_opt:    # Закомментировано для Windows
-    #   - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -34,6 +28,51 @@ services:
           memory: 512M
     networks:
       - litagent_network
+
+
+  summarizer:
+    build: ./Summarizer
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+    networks:
+      - litagent_network
+
+  questiongenerator:
+    build: ./QuestionGenerator
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+    networks:
+      - litagent_network
+
+  character:
+    build: ./character_analyzer
+    ports:
+      - "8004:8000"
+    restart: unless-stopped
+    networks:
+      - litagent_network
+
+  orchestrator:
+    build: ./orchestrator
+    ports:
+      - "8003:8000"
+    depends_on:
+      - booker
+      - summarizer
+      - questiongenerator
+      - character
+    restart: unless-stopped
+    networks:
+      - litagent_network
+    # Ограничения безопасности (временно отключаем для Windows)
+    # read_only: true  # Закомментировано для Windows
+    # tmpfs:           # Закомментировано для Windows
+    #   - /tmp:size=64M
+    # security_opt:    # Закомментировано для Windows
+    #   - no-new-privileges:true
+
 
   # Prometheus временно отключаем, если нет файла конфигурации
   # prometheus:
@@ -67,3 +106,4 @@ volumes:
 networks:
   litagent_network:
     driver: bridge
+

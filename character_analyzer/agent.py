@@ -2,12 +2,12 @@ import logging
 from typing import Dict, Any, List, Optional
 from tqdm import tqdm
 
-from .models import Character, Relationship
-from .ner import NERExtractor
-from .context import collect_character_context
-from .prompts import build_character_prompt
-from .llm_client import LLMClient
-from .relationships import build_relationships
+from character_analyzer.models import Character
+from character_analyzer.ner import NERExtractor
+from character_analyzer.context import collect_character_context
+from character_analyzer.prompts import build_character_prompt
+from character_analyzer.llm_client import LLMClient
+from character_analyzer.relationships import build_relationships
 
 logger = logging.getLogger(__name__)
 
