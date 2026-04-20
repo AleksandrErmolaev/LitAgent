@@ -1,0 +1,23 @@
+{
+  "title": "Multi-Agent System Dashboard",
+  "panels": [
+    {
+      "title": "Requests per second (all agents)",
+      "targets": [
+        {
+          "expr": "sum by(job) (rate(requests_total[5m]))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "title": "P95 latency",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by(job, le) (rate(request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    }
+  ]
+}
