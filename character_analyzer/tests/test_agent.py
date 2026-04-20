@@ -1,6 +1,6 @@
 import json
 
-from ..agent import CharacterAnalyzerAgent
+from character_analyzer.agent import CharacterAnalyzerAgent
 
 class MockLLM:
     def generate(self, prompt: str) -> str:

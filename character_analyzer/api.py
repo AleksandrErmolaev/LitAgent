@@ -1,8 +1,7 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from agents.character_analyzer.agent import CharacterAnalyzerAgent
-
+from .agent import CharacterAnalyzerAgent
 # Настройка логгера
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
